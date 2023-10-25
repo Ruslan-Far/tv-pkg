@@ -12,6 +12,7 @@ ROS_IMAGE_TOPIC: Final[str] = "/pylon_camera_node/image_raw"
 def image_callback(msg: Image, cv_bridge: CvBridge) -> None:
 	image = cv_bridge.imgmsg_to_cv2(msg)
 	window_name = 'window'
+	image = cv2.resize(image, (128, 128))
 	cv2.imshow(window_name, image)
 	cv2.waitKey(1)
 

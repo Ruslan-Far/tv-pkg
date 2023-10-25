@@ -7,7 +7,7 @@ from sensor_msgs.msg import Image
 from typing import Final
 
 ROS_NODE_NAME: Final[str] = "subscriber"
-ROS_IMAGE_TOPIC: Final[str] = "/pylon_camera_node/image_raw"
+ROS_IMAGE_TOPIC: Final[str] = "image_resized"
 
 def image_callback(msg: Image, cv_bridge: CvBridge) -> None:
 	image = cv_bridge.imgmsg_to_cv2(msg)
