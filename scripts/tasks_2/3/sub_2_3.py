@@ -9,12 +9,13 @@ from typing import Final
 ROS_NODE_NAME: Final[str] = "subscriber"
 ROS_IMAGE_TOPIC: Final[str] = "/pylon_camera_node/image_raw"
 
-# Поменять в конфиге камеры значение image_encoding на rgb8 (image_encoding: "rgb8")
-def image_callback(msg: Image, cv_bridge: CvBridge) -> None:
-	img_bgr = cv_bridge.imgmsg_to_cv2(msg)
-	img_rgb = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
+def image_callback(msg: Image, cv_bridge: CvBridge, height: int, width: int) -> None:
+	img_gray = cv_bridge.imgmsg_to_cv2(msg)
+	img_rgb = cv2.cvtColor(img_gray, cv2.COLOR_GRAY2RGB)
 
-	cropped_img_rgb = img_rgb[200 : 328, 400 : 528]
+	height_start = int(img_rgb.shape[0] / 2) - int(height / 2)
+	width_start = int(img_rgb.shape[1] / 2) - int(width / 2)
+	cropped_img_rgb = img_rgb[height_start : height_start + height, width_start : width_start + width]
 
 	img_hsv = cv2.cvtColor(cropped_img_rgb, cv2.COLOR_RGB2HSV)
 	h, s, v = cv2.split(img_hsv)
@@ -35,7 +36,10 @@ def main() -> None:
 
 	cv_bridge: CvBridge = CvBridge()
 
-	rospy.Subscriber(ROS_IMAGE_TOPIC, Image, lambda msg: image_callback(msg, cv_bridge), queue_size = None)
+	height = 128
+	width = 128
+
+	rospy.Subscriber(ROS_IMAGE_TOPIC, Image, lambda msg: image_callback(msg, cv_bridge, height, width), queue_size = None)
 
 	rospy.spin()
 
