@@ -7,13 +7,14 @@ from cv_bridge import CvBridge
 from typing import Final
 
 ROS_NODE_NAME: Final[str] = "publisher"
-ROS_IMAGE_TOPIC_LISTEN: Final[str] = "/pylon_camera_node/image_raw"
+# ROS_IMAGE_TOPIC_LISTEN: Final[str] = "/pylon_camera_node/image_raw"
+ROS_IMAGE_TOPIC_LISTEN: Final[str] = "/dvs/image_raw"
 ROS_IMAGE_TOPIC_TALK: Final[str] = "image_resized"
 
 def image_callback(msg: Image, cv_bridge: CvBridge, pub: rospy.Publisher) -> None:
 	image = cv_bridge.imgmsg_to_cv2(msg)
 	image = cv2.resize(image, (128, 128))
-	image = cv_bridge.cv2_to_imgmsg(image)
+	image = cv_bridge.cv2_to_imgmsg(image, msg.encoding)
 	pub.publish(image)
 
 

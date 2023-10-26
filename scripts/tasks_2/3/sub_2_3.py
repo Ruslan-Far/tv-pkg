@@ -7,14 +7,13 @@ from sensor_msgs.msg import Image
 from typing import Final
 
 ROS_NODE_NAME: Final[str] = "subscriber"
-ROS_IMAGE_TOPIC: Final[str] = "/pylon_camera_node/image_raw"
+# ROS_IMAGE_TOPIC: Final[str] = "/pylon_camera_node/image_raw"
+ROS_IMAGE_TOPIC: Final[str] = "/dvs/image_raw"
 
-def image_callback(msg: Image, cv_bridge: CvBridge, height: int, width: int) -> None:
+def image_callback(msg: Image, cv_bridge: CvBridge, height_start: int, width_start: int, height: int, width: int) -> None:
 	img_gray = cv_bridge.imgmsg_to_cv2(msg)
 	img_rgb = cv2.cvtColor(img_gray, cv2.COLOR_GRAY2RGB)
 
-	height_start = int(img_rgb.shape[0] / 2) - int(height / 2)
-	width_start = int(img_rgb.shape[1] / 2) - int(width / 2)
 	cropped_img_rgb = img_rgb[height_start : height_start + height, width_start : width_start + width]
 
 	img_hsv = cv2.cvtColor(cropped_img_rgb, cv2.COLOR_RGB2HSV)
@@ -38,8 +37,10 @@ def main() -> None:
 
 	height = 128
 	width = 128
+	height_start = int(sample.height / 2) - int(height / 2)
+	width_start = int(sample.width / 2) - int(width / 2)
 
-	rospy.Subscriber(ROS_IMAGE_TOPIC, Image, lambda msg: image_callback(msg, cv_bridge, height, width), queue_size = None)
+	rospy.Subscriber(ROS_IMAGE_TOPIC, Image, lambda msg: image_callback(msg, cv_bridge, height_start, width_start, height, width), queue_size = None)
 
 	rospy.spin()
 
