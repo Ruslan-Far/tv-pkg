@@ -9,11 +9,16 @@ from typing import Final
 ROS_NODE_NAME: Final[str] = "subscriber"
 ROS_IMAGE_TOPIC: Final[str] = "/pylon_camera_node/image_raw"
 
+# Поменять в конфиге камеры значение image_encoding на rgb8 (image_encoding: "rgb8")
 def image_callback(msg: Image, cv_bridge: CvBridge) -> None:
-	image = cv_bridge.imgmsg_to_cv2(msg)
-	image = cv2.resize(image, (128, 128))
-	img_hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
-	h,s,v = cv2.split(img_hsv)
+	img_bgr = cv_bridge.imgmsg_to_cv2(msg)
+	img_rgb = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
+
+	cropped_img_rgb = img_rgb[200 : 328, 400 : 528]
+
+	img_hsv = cv2.cvtColor(cropped_img_rgb, cv2.COLOR_RGB2HSV)
+	h, s, v = cv2.split(img_hsv)
+	
 	cv2.imshow("hue", h)
 	cv2.imshow("saturation", s)
 	cv2.imshow("value", v)
