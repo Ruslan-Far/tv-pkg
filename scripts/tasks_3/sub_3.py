@@ -10,8 +10,14 @@ ROS_NODE_NAME: Final[str] = "subscriber"
 ROS_IMAGE_TOPIC: Final[str] = "/pylon_camera_node/image_raw"
 HEIGHT: Final[int] = 300
 WIDTH: Final[int] = 300
-
-flag_trackbar = True
+WINDOW_ORIG: Final[str] = "original"
+WINDOW_BIN: Final[str] = "binary"
+TRACK_H_MIN: Final[str] = "h_min"
+TRACK_H_MAX: Final[str] = "h_max"
+TRACK_S_MIN: Final[str] = "s_min"
+TRACK_S_MAX: Final[str] = "s_max"
+TRACK_V_MIN: Final[str] = "v_min"
+TRACK_V_MAX: Final[str] = "v_max"
 
 # Можно использовать данный способ, если под рукой есть камера
 # h_min = 999
@@ -21,19 +27,14 @@ flag_trackbar = True
 # v_min = 999
 # v_max = -1
 
-h_min = 0
-h_max = 179
-s_min = 0
-s_max = 50
-v_min = 190
-v_max = 255
+h_min = 80
+h_max = 84
+s_min = 237
+s_max = 255
+v_min = 99
+v_max = 171
 
-def change_h_min():
-	# global h_min
-	# h_min = arg
-	print(cv2.getTrackbarPos("h_min", "binary"))
-	# print(type(arg))
-	print("jjjjj")
+def nothing(arg):
 	pass
 
 def find_h_min_max(h):
@@ -77,8 +78,6 @@ def print_h_s_v_min_max():
 	print("++++++++++++++++++++++++++++++++++")
 
 def image_callback(msg: Image, cv_bridge: CvBridge) -> None:
-	global flag_trackbar
-	global h_min
 	img_bgr = cv_bridge.imgmsg_to_cv2(msg)
 	img_rgb = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
 	img_rgb = cv2.resize(img_rgb, (HEIGHT, WIDTH))
@@ -95,23 +94,38 @@ def image_callback(msg: Image, cv_bridge: CvBridge) -> None:
 	# find_v_min_max(v)
 	# print_h_s_v_min_max()
 	
-	# if flag_trackbar:
-	cv2.createTrackbar("h_min", "binary", h_min, 179, change_h_min)
-	# print("-----------------------------------------")
-	flag_trackbar = not flag_trackbar
-	# current_h_min= cv2.getTrackbarPos("h_min", "binary")
-	# print(current_h_min)
-	# h_min = current_h_min
+	h_min = cv2.getTrackbarPos(TRACK_H_MIN, WINDOW_BIN)
+	h_max = cv2.getTrackbarPos(TRACK_H_MAX, WINDOW_BIN)
+	s_min = cv2.getTrackbarPos(TRACK_S_MIN, WINDOW_BIN)
+	s_max = cv2.getTrackbarPos(TRACK_S_MAX, WINDOW_BIN)
+	v_min = cv2.getTrackbarPos(TRACK_V_MIN, WINDOW_BIN)
+	v_max = cv2.getTrackbarPos(TRACK_V_MAX, WINDOW_BIN)
 
 	img_hsv_thresh = cv2.inRange(img_hsv, (h_min, s_min, v_min), (h_max, s_max, v_max))
 
-	cv2.imshow("original", img_rgb)
-	cv2.imshow("binary", img_hsv_thresh)
+	cv2.imshow(WINDOW_ORIG, img_rgb)
+	cv2.imshow(WINDOW_BIN, img_hsv_thresh)
 	cv2.waitKey(1)
 
 
 def main() -> None:
 	rospy.init_node(ROS_NODE_NAME)
+
+	cv2.namedWindow(WINDOW_BIN)
+
+	cv2.createTrackbar(TRACK_H_MIN, WINDOW_BIN, 0, 179, nothing)
+	cv2.createTrackbar(TRACK_H_MAX, WINDOW_BIN, 0, 179, nothing)
+	cv2.createTrackbar(TRACK_S_MIN, WINDOW_BIN, 0, 255, nothing)
+	cv2.createTrackbar(TRACK_S_MAX, WINDOW_BIN, 0, 255, nothing)
+	cv2.createTrackbar(TRACK_V_MIN, WINDOW_BIN, 0, 255, nothing)
+	cv2.createTrackbar(TRACK_V_MAX, WINDOW_BIN, 0, 255, nothing)
+
+	cv2.setTrackbarPos(TRACK_H_MIN, WINDOW_BIN, h_min)
+	cv2.setTrackbarPos(TRACK_H_MAX, WINDOW_BIN, h_max)
+	cv2.setTrackbarPos(TRACK_S_MIN, WINDOW_BIN, s_min)
+	cv2.setTrackbarPos(TRACK_S_MAX, WINDOW_BIN, s_max)
+	cv2.setTrackbarPos(TRACK_V_MIN, WINDOW_BIN, v_min)
+	cv2.setTrackbarPos(TRACK_V_MAX, WINDOW_BIN, v_max)
 
 	sample: Image = rospy.wait_for_message(ROS_IMAGE_TOPIC, Image, timeout = 3.0)
 
