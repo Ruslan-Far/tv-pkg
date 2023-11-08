@@ -21,11 +21,14 @@ catkin_install_python(PROGRAMS
   scripts/tasks_1/1/pub_1_1.py
   scripts/tasks_1/2/sub_1_2.py
   scripts/tasks_1/3/sub_1_3.py
+  
   scripts/tasks_2/1/sub_2_1.py
   scripts/tasks_2/2/pub_2_2.py
   scripts/tasks_2/2/sub_2_2.py
   scripts/tasks_2/3/sub_2_3.py
   scripts/tasks_2/4/sub_2_4.py
+
+  scripts/tasks_3/sub_3.py
 
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
