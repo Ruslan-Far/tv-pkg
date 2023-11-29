@@ -30,5 +30,7 @@ catkin_install_python(PROGRAMS
 
   scripts/tasks_3/sub_3.py
 
+  scripts/tasks_4/1/sub_4_1.py
+
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
