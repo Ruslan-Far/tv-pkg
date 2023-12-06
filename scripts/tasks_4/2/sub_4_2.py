@@ -13,7 +13,7 @@ ROS_IMAGE_TOPIC: Final[str] = "/pylon_camera_node/image_raw"
 HEIGHT: Final[int] = 300
 WIDTH: Final[int] = 300
 WINDOW_ORIG: Final[str] = "original"
-WINDOW_AFFINE_CHANGED: Final[str] = "affine_changed"
+WINDOW_CHANGED: Final[str] = "changed"
 random.seed(777)
 
 
@@ -35,27 +35,27 @@ def image_callback(msg: Image, cv_bridge: CvBridge) -> None:
 	pts_dst = np.float32([[WIDTH * koef_width_1, HEIGHT * koef_height_1], [WIDTH * koef_width_2, HEIGHT * koef_height_2],
 					   		[WIDTH * koef_width_3, HEIGHT * koef_height_3], [WIDTH * koef_width_4, HEIGHT * koef_height_4]])
 	perspective_matrix = cv2.getPerspectiveTransform(pts_src, pts_dst)
-	img_affine_changed = cv2.warpPerspective(img_rgb, perspective_matrix, (WIDTH, HEIGHT))
+	img_changed = cv2.warpPerspective(img_rgb, perspective_matrix, (WIDTH, HEIGHT))
 
 	# translation
 	translation_matrix = np.float32([[1, 0, random.randint(-WIDTH / 5, WIDTH / 5)], [0, 1, random.randint(-HEIGHT / 5, HEIGHT / 5)]])
-	img_affine_changed = cv2.warpAffine(img_affine_changed, translation_matrix, dsize=(WIDTH, HEIGHT))
+	img_changed = cv2.warpAffine(img_changed, translation_matrix, dsize=(WIDTH, HEIGHT))
 
 	# rotation and scale
 	rotation_matrix = cv2.getRotationMatrix2D(center=(WIDTH / 2, HEIGHT / 2), angle=random.randint(-90, 90),
 										   												scale=random.random() * (1.5 - 0.5) + 0.5)
-	img_affine_changed = cv2.warpAffine(img_affine_changed, rotation_matrix, dsize=(WIDTH, HEIGHT))
+	img_changed = cv2.warpAffine(img_changed, rotation_matrix, dsize=(WIDTH, HEIGHT))
 
 	# reflection
-	img_affine_changed = cv2.flip(img_affine_changed, flipCode=random.randint(-1, 1))
+	img_changed = cv2.flip(img_changed, flipCode=random.randint(-1, 1))
 
 	# shear
 	shear_matrix = np.float32 ([[1, random.random() * (0.3 + 0.3) - 0.3, 0],
 								[random.random() * (0.3 + 0.3) - 0.3, 1, 0]])
-	img_affine_changed = cv2.warpAffine(img_affine_changed, shear_matrix, dsize=(WIDTH, HEIGHT))
+	img_changed = cv2.warpAffine(img_changed, shear_matrix, dsize=(WIDTH, HEIGHT))
 
 	cv2.imshow(WINDOW_ORIG, img_rgb)
-	cv2.imshow(WINDOW_AFFINE_CHANGED, img_affine_changed)
+	cv2.imshow(WINDOW_CHANGED, img_changed)
 	cv2.waitKey(1)
 
 
