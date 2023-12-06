@@ -22,12 +22,6 @@ TRACK_V_MIN: Final[str] = "v_min"
 TRACK_V_MAX: Final[str] = "v_max"
 TRACK_THRESH_CANNY: Final[str] = "thresh_canny"
 
-# h_min = 82
-# h_max = 84
-# s_min = 249
-# s_max = 255
-# v_min = 137
-# v_max = 161
 h_min = 75
 h_max = 84
 s_min = 239
@@ -119,7 +113,7 @@ def image_callback(msg: Image, cv_bridge: CvBridge) -> None:
 	cv2.imshow(WINDOW_BIN, img_hsv_thresh)
 	cv2.imshow(WINDOW_CONT_POLY, img_cont_poly)
 
-	cv2.waitKey(0)
+	cv2.waitKey(1)
 
 
 def main() -> None:
