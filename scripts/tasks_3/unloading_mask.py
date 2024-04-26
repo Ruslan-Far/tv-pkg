@@ -140,8 +140,8 @@ class UnloadingMask:
 				dx = int(dx * self.FACTOR_X)
 				img_rgb[rl[1]:rl[1]+dy, lu[0]:lu[0]+dx] = 0
 
-				cv2.drawContours(img_cont_poly, [approx_poly], 0, (255, 0, 0), 1)
-			cv2.imshow(self.WINDOW_CONT_POLY, img_cont_poly)
+				# cv2.drawContours(img_cont_poly, [approx_poly], 0, (255, 0, 0), 1)
+			# cv2.imshow(self.WINDOW_CONT_POLY, img_cont_poly)
 		return img_rgb
 
 
@@ -153,25 +153,43 @@ class UnloadingMask:
 		v_min = 131
 		v_max = 158
 		mask = cv2.inRange(img_hsv, (h_min, s_min, v_min), (h_max, s_max, v_max))
-		cv2.imshow(self.WINDOW_BIN, mask)
+		# cv2.imshow(self.WINDOW_BIN, mask)
 		return mask
 
 
 	def processBlue(self, img_hsv):
-		h_min = 14
-		h_max = 26
-		s_min = 110
-		s_max = 125
-		v_min = 121
-		v_max = 134
+		if self.currentPositionY < 3:
+			h_min = 0
+			h_max = 26
+			s_min = 102
+			s_max = 126
+			v_min = 132
+			v_max = 151
+		elif self.currentPositionY < 4:
+			h_min = 17
+			h_max = 20
+			s_min = 120
+			s_max = 149
+			v_min = 117
+			v_max = 134
+		else:
+			h_min = 14
+			h_max = 26
+			s_min = 110
+			s_max = 125
+			v_min = 121
+			v_max = 134
 		mask = cv2.inRange(img_hsv, (h_min, s_min, v_min), (h_max, s_max, v_max))
-		cv2.imshow(self.WINDOW_BIN, mask)
+		# cv2.imshow(self.WINDOW_BIN, mask)
 		kernel = numpy.ones((3,3), numpy.uint8)
-
 		erosion = cv2.erode(mask, kernel, iterations = 1)
-		cv2.imshow(self.WINDOW_EROSION, erosion)
-		dilation = cv2.dilate(erosion, kernel, iterations = 7)
-		cv2.imshow(self.WINDOW_DILATION, dilation)
+		# cv2.imshow(self.WINDOW_EROSION, erosion)
+
+		if self.currentPositionY < 4:
+			dilation = cv2.dilate(erosion, kernel, iterations = 3)
+		else:
+			dilation = cv2.dilate(erosion, kernel, iterations = 7)
+		# cv2.imshow(self.WINDOW_DILATION, dilation)
 		return dilation
 
 
@@ -195,7 +213,7 @@ class UnloadingMask:
 		# -----------------------------------------------------
 
 		# -----------------------------------------------------
-		# img_rgb = self.findUnloadingMask(img_rgb, self.processBlue(img_hsv))
+		img_rgb = self.findUnloadingMask(img_rgb, self.processBlue(img_hsv))
 		# -----------------------------------------------------
 
 		# self.imageRawPub.publish(self.bridge.cv2_to_imgmsg(img_rgb))
@@ -262,4 +280,12 @@ if __name__ == '__main__':
 		# s_min = 110
 		# s_max = 125
 		# v_min = 121
+		# v_max = 134
+	
+	# blue 4
+		# h_min = 17
+		# h_max = 20
+		# s_min = 120
+		# s_max = 149
+		# v_min = 117
 		# v_max = 134
