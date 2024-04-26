@@ -7,9 +7,10 @@ from cv_bridge import CvBridge
 from typing import Final
 
 ROS_NODE_NAME: Final[str] = "subscriber"
-ROS_IMAGE_TOPIC: Final[str] = "/pylon_camera_node/image_raw"
-HEIGHT: Final[int] = 300
-WIDTH: Final[int] = 300
+# ROS_IMAGE_TOPIC: Final[str] = "/pylon_camera_node/image_raw"
+ROS_IMAGE_TOPIC: Final[str] = "/usb_cam/image_raw"
+WIDTH: Final[int] = 1280
+HEIGHT: Final[int] = 720
 WINDOW_ORIG: Final[str] = "original"
 WINDOW_BIN: Final[str] = "binary"
 TRACK_H_MIN: Final[str] = "h_min"
@@ -27,12 +28,23 @@ TRACK_V_MAX: Final[str] = "v_max"
 # v_min = 999
 # v_max = -1
 
-h_min = 80
-h_max = 84
-s_min = 237
-s_max = 255
-v_min = 99
-v_max = 171
+
+
+# orange
+# h_min = 70
+# h_max = 109
+# s_min = 69
+# s_max = 152
+# v_min = 131
+# v_max = 158
+
+# blue
+h_min = 0
+h_max = 26
+s_min = 102
+s_max = 126
+v_min = 132
+v_max = 151
 
 def nothing(arg):
 	pass
@@ -80,7 +92,7 @@ def print_h_s_v_min_max():
 def image_callback(msg: Image, cv_bridge: CvBridge) -> None:
 	img_bgr = cv_bridge.imgmsg_to_cv2(msg)
 	img_rgb = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
-	img_rgb = cv2.resize(img_rgb, (HEIGHT, WIDTH))
+	img_rgb = cv2.resize(img_rgb, (WIDTH, HEIGHT))
 
 	img_hsv = cv2.cvtColor(img_rgb, cv2.COLOR_RGB2HSV)
 
