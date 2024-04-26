@@ -9,10 +9,11 @@ import time
 
 class UnloadingMask:
 
+	WIDTH = 1280
+	HEIGHT = 720
 	MIN_NUM_PIXELS = 3
 
-	# UNLOADING_POSITION_X = -0.74
-	# UNLOADING_POSITION_Y = -10
+	UNLOADING_POSITION_Y = -10
 
 	LAM_X_ANGLE = 9
 	LAM_X_ANGLE_2 = 5
@@ -39,8 +40,8 @@ class UnloadingMask:
 		pass
 
 	def __init__(self):
-		# self.startPositionX = 0
 		# self.startPositionY = 0
+		self.currentPositionY = 0
 
 		# self.amclPoseSub = rospy.Subscriber("/amcl_pose", PoseWithCovarianceStamped, self.amclPoseCallback, queue_size = 1)
 		
@@ -84,12 +85,16 @@ class UnloadingMask:
 		cv2.setTrackbarPos(self.TRACK_LAM_Y_2, self.WINDOW_ORIG, self.LAM_Y_2)
 
 
+	def updateFactors(self):
+		self.FACTOR_X_ANGLE = self.LAM_X_ANGLE / 10 - math.exp(-self.LAM_X_ANGLE_2 / 10 * self.currentPositionY)
+		self.FACTOR_X = self.LAM_X / math.exp(self.currentPositionY / self.LAM_X_2)
+		self.FACTOR_Y_ANGLE = 1
+		self.FACTOR_Y = self.LAM_Y / math.exp(self.currentPositionY / self.LAM_Y_2)
+
+
 	# def amclPoseCallback(self, PoseWithCovarianceStamped):
-		# currentPositionY = abs(PoseWithCovarianceStamped.pose.pose.position.y - self.UNLOADING_POSITION_Y)
-		# self.FACTOR_X_ANGLE = self.LAM_X_ANGLE / 10 - math.exp(-self.LAM_X_ANGLE_2 / 10 * currentPositionY)
-		# self.FACTOR_X = self.LAM_X / math.exp(currentPositionY / self.LAM_X_2)
-		# self.FACTOR_Y_ANGLE = 1
-		# self.FACTOR_Y = self.LAM_Y / math.exp(currentPositionY / self.LAM_Y_2)
+	# 	self.currentPositionY = abs(PoseWithCovarianceStamped.pose.pose.position.y - self.UNLOADING_POSITION_Y)
+	# 	self.updateFactors()
 
 
 	def findLeftUpperPoint(self, approx_poly):
@@ -140,46 +145,19 @@ class UnloadingMask:
 		return img_rgb
 
 
-	def processOrange(self):
-		pass
+	def processOrange(self, img_hsv):
+		h_min = 70
+		h_max = 109
+		s_min = 69
+		s_max = 152
+		v_min = 131
+		v_max = 158
+		mask = cv2.inRange(img_hsv, (h_min, s_min, v_min), (h_max, s_max, v_max))
+		cv2.imshow(self.WINDOW_BIN, mask)
+		return mask
 
 
-	def processBlue(self):
-		pass
-
-
-	def imageCallback(self, msg):
-		currentPositionY = cv2.getTrackbarPos(self.TRACK_POS_Y, self.WINDOW_ORIG)
-		self.LAM_X_ANGLE = cv2.getTrackbarPos(self.TRACK_LAM_X_ANGLE, self.WINDOW_ORIG)
-		self.LAM_X_ANGLE_2 = cv2.getTrackbarPos(self.TRACK_LAM_X_ANGLE_2, self.WINDOW_ORIG)
-		self.LAM_X = cv2.getTrackbarPos(self.TRACK_LAM_X, self.WINDOW_ORIG)
-		self.LAM_X_2 = cv2.getTrackbarPos(self.TRACK_LAM_X_2, self.WINDOW_ORIG)
-		self.LAM_Y = cv2.getTrackbarPos(self.TRACK_LAM_Y, self.WINDOW_ORIG)
-		self.LAM_Y_2 = cv2.getTrackbarPos(self.TRACK_LAM_Y_2, self.WINDOW_ORIG)
-
-		self.FACTOR_X_ANGLE = self.LAM_X_ANGLE / 10 - math.exp(-self.LAM_X_ANGLE_2 / 10 * currentPositionY)
-		self.FACTOR_X = self.LAM_X / math.exp(currentPositionY / self.LAM_X_2)
-		self.FACTOR_Y_ANGLE = 1
-		self.FACTOR_Y = self.LAM_Y / math.exp(currentPositionY / self.LAM_Y_2)
-
-		img_rgb = self.bridge.imgmsg_to_cv2(msg)
-		img_rgb = cv2.cvtColor(img_rgb, cv2.COLOR_BGR2RGB)
-		img_rgb = cv2.resize(img_rgb, (1280, 720))
-		img_hsv = cv2.cvtColor(img_rgb, cv2.COLOR_RGB2HSV)
-
-		# orange
-		# h_min = 70
-		# h_max = 109
-		# s_min = 69
-		# s_max = 152
-		# v_min = 131
-		# v_max = 158
-		# mask = cv2.inRange(img_hsv, (h_min, s_min, v_min), (h_max, s_max, v_max))
-
-		# img_rgb = self.findUnloadingMask(img_rgb, mask)
-		# -----------------------------------------------------
-
-		# blue
+	def processBlue(self, img_hsv):
 		h_min = 14
 		h_max = 26
 		s_min = 110
@@ -187,21 +165,41 @@ class UnloadingMask:
 		v_min = 121
 		v_max = 134
 		mask = cv2.inRange(img_hsv, (h_min, s_min, v_min), (h_max, s_max, v_max))
+		cv2.imshow(self.WINDOW_BIN, mask)
 		kernel = numpy.ones((3,3), numpy.uint8)
-		J_erosion = cv2.erode(mask, kernel, iterations = 1)
-		cv2.imshow(self.WINDOW_EROSION, J_erosion)
-		kernel = numpy.ones((3,3), numpy.uint8)
-		J_dilation = cv2.dilate(J_erosion, kernel, iterations = 7)
-		cv2.imshow(self.WINDOW_DILATION, J_dilation)
 
-		# img_rgb = self.findUnloadingMask(img_rgb, mask)
-		img_rgb = self.findUnloadingMask(img_rgb, J_dilation)
+		erosion = cv2.erode(mask, kernel, iterations = 1)
+		cv2.imshow(self.WINDOW_EROSION, erosion)
+		dilation = cv2.dilate(erosion, kernel, iterations = 7)
+		cv2.imshow(self.WINDOW_DILATION, dilation)
+		return dilation
+
+
+	def imageCallback(self, msg):
+		self.currentPositionY = cv2.getTrackbarPos(self.TRACK_POS_Y, self.WINDOW_ORIG)
+		self.LAM_X_ANGLE = cv2.getTrackbarPos(self.TRACK_LAM_X_ANGLE, self.WINDOW_ORIG)
+		self.LAM_X_ANGLE_2 = cv2.getTrackbarPos(self.TRACK_LAM_X_ANGLE_2, self.WINDOW_ORIG)
+		self.LAM_X = cv2.getTrackbarPos(self.TRACK_LAM_X, self.WINDOW_ORIG)
+		self.LAM_X_2 = cv2.getTrackbarPos(self.TRACK_LAM_X_2, self.WINDOW_ORIG)
+		self.LAM_Y = cv2.getTrackbarPos(self.TRACK_LAM_Y, self.WINDOW_ORIG)
+		self.LAM_Y_2 = cv2.getTrackbarPos(self.TRACK_LAM_Y_2, self.WINDOW_ORIG)
+		self.updateFactors()
+
+		img_rgb = self.bridge.imgmsg_to_cv2(msg)
+		img_rgb = cv2.cvtColor(img_rgb, cv2.COLOR_BGR2RGB)
+		img_rgb = cv2.resize(img_rgb, (self.WIDTH, self.HEIGHT))
+		img_hsv = cv2.cvtColor(img_rgb, cv2.COLOR_RGB2HSV)
+
+		# -----------------------------------------------------
+		img_rgb = self.findUnloadingMask(img_rgb, self.processOrange(img_hsv))
+		# -----------------------------------------------------
+
+		# -----------------------------------------------------
+		# img_rgb = self.findUnloadingMask(img_rgb, self.processBlue(img_hsv))
 		# -----------------------------------------------------
 
 		# self.imageRawPub.publish(self.bridge.cv2_to_imgmsg(img_rgb))
-
 		cv2.imshow(self.WINDOW_ORIG, img_rgb)
-		cv2.imshow(self.WINDOW_BIN, mask)
 		cv2.waitKey(3)
 	
 
@@ -216,7 +214,6 @@ if __name__ == '__main__':
 		unloadingMask.start()
 	except rospy.ROSInterruptException:
 		pass
-
 
 
 # orange
