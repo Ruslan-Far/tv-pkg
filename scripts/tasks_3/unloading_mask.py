@@ -2,10 +2,8 @@
 from sensor_msgs.msg import Image
 from geometry_msgs.msg import PoseWithCovarianceStamped
 import math
-import sys
-import rospy, cv2, numpy, roslib
+import rospy, cv2, numpy
 from cv_bridge import CvBridge
-import time
 
 class UnloadingMask:
 
@@ -40,49 +38,50 @@ class UnloadingMask:
 		pass
 
 	def __init__(self):
-		# self.startPositionY = 0
+
 		self.currentPositionY = 0
 
-		# self.amclPoseSub = rospy.Subscriber("/amcl_pose", PoseWithCovarianceStamped, self.amclPoseCallback, queue_size = 1)
+		self.amclPoseSub = rospy.Subscriber("/amcl_pose", PoseWithCovarianceStamped, self.amclPoseCallback, queue_size = 1)
 		
-		# self.imageRawSub = rospy.Subscriber("/forward_rgb_camera/rgb/image_raw", Image, self.imageCallback)
-		self.imageRawSub = rospy.Subscriber("/usb_cam/image_raw", Image, self.imageCallback)
+		# self.imageRawSub = rospy.Subscriber("/usb_cam/image_raw", Image, self.imageCallback)
 
-		# self.imageRawPub = rospy.Publisher("/my_forward_rgb_camera/rgb/image_raw", Image, queue_size=1)
+		self.imageRawSub = rospy.Subscriber("/wall_cam/usb_cam/image_rect_color", Image, self.imageCallback)
 
-		self.WINDOW_ORIG = "forward.original"
-		self.WINDOW_BIN = "forward.binary"
-		self.WINDOW_CANNY = "canny"
-		self.WINDOW_CONT_POLY = "cont_poly"
-		self.WINDOW_EROSION = "erosion"
-		self.WINDOW_DILATION = "dilation"
+		self.imageRawPub = rospy.Publisher("/new_wall_cam/usb_cam/image_rect_color", Image, queue_size=1)
 
-		cv2.namedWindow(self.WINDOW_ORIG)
+		# self.WINDOW_ORIG = "forward.original"
+		# self.WINDOW_BIN = "forward.binary"
+		# self.WINDOW_CANNY = "canny"
+		# self.WINDOW_CONT_POLY = "cont_poly"
+		# self.WINDOW_EROSION = "erosion"
+		# self.WINDOW_DILATION = "dilation"
+
+		# cv2.namedWindow(self.WINDOW_ORIG)
 		self.bridge = CvBridge()
 
-		self.TRACK_POS_Y = "Y"
-		self.TRACK_LAM_X_ANGLE = "LAM_X_ANGLE"
-		self.TRACK_LAM_X_ANGLE_2 = "LAM_X_ANGLE_2"
-		self.TRACK_LAM_X = "LAM_X"
-		self.TRACK_LAM_X_2 = "LAM_X_2"
-		self.TRACK_LAM_Y = "LAM_Y"
-		self.TRACK_LAM_Y_2 = "LAM_Y_2"
+		# self.TRACK_POS_Y = "Y"
+		# self.TRACK_LAM_X_ANGLE = "LAM_X_ANGLE"
+		# self.TRACK_LAM_X_ANGLE_2 = "LAM_X_ANGLE_2"
+		# self.TRACK_LAM_X = "LAM_X"
+		# self.TRACK_LAM_X_2 = "LAM_X_2"
+		# self.TRACK_LAM_Y = "LAM_Y"
+		# self.TRACK_LAM_Y_2 = "LAM_Y_2"
 
-		cv2.createTrackbar(self.TRACK_POS_Y, self.WINDOW_ORIG, 0, 15, self.nothing)
-		cv2.createTrackbar(self.TRACK_LAM_X_ANGLE, self.WINDOW_ORIG, 1, 50, self.nothing)
-		cv2.createTrackbar(self.TRACK_LAM_X_ANGLE_2, self.WINDOW_ORIG, 1, 50, self.nothing)
-		cv2.createTrackbar(self.TRACK_LAM_X, self.WINDOW_ORIG, 1, 50, self.nothing)
-		cv2.createTrackbar(self.TRACK_LAM_X_2, self.WINDOW_ORIG, 1, 50, self.nothing)
-		cv2.createTrackbar(self.TRACK_LAM_Y, self.WINDOW_ORIG, 1, 50, self.nothing)
-		cv2.createTrackbar(self.TRACK_LAM_Y_2, self.WINDOW_ORIG, 1, 50, self.nothing)
+		# cv2.createTrackbar(self.TRACK_POS_Y, self.WINDOW_ORIG, 0, 15, self.nothing)
+		# cv2.createTrackbar(self.TRACK_LAM_X_ANGLE, self.WINDOW_ORIG, 1, 50, self.nothing)
+		# cv2.createTrackbar(self.TRACK_LAM_X_ANGLE_2, self.WINDOW_ORIG, 1, 50, self.nothing)
+		# cv2.createTrackbar(self.TRACK_LAM_X, self.WINDOW_ORIG, 1, 50, self.nothing)
+		# cv2.createTrackbar(self.TRACK_LAM_X_2, self.WINDOW_ORIG, 1, 50, self.nothing)
+		# cv2.createTrackbar(self.TRACK_LAM_Y, self.WINDOW_ORIG, 1, 50, self.nothing)
+		# cv2.createTrackbar(self.TRACK_LAM_Y_2, self.WINDOW_ORIG, 1, 50, self.nothing)
 
-		cv2.setTrackbarPos(self.TRACK_POS_Y, self.WINDOW_ORIG, 0)
-		cv2.setTrackbarPos(self.TRACK_LAM_X_ANGLE, self.WINDOW_ORIG, self.LAM_X_ANGLE)
-		cv2.setTrackbarPos(self.TRACK_LAM_X_ANGLE_2, self.WINDOW_ORIG, self.LAM_X_ANGLE_2)
-		cv2.setTrackbarPos(self.TRACK_LAM_X, self.WINDOW_ORIG, self.LAM_X)
-		cv2.setTrackbarPos(self.TRACK_LAM_X_2, self.WINDOW_ORIG, self.LAM_X_2)
-		cv2.setTrackbarPos(self.TRACK_LAM_Y, self.WINDOW_ORIG, self.LAM_Y)
-		cv2.setTrackbarPos(self.TRACK_LAM_Y_2, self.WINDOW_ORIG, self.LAM_Y_2)
+		# cv2.setTrackbarPos(self.TRACK_POS_Y, self.WINDOW_ORIG, 0)
+		# cv2.setTrackbarPos(self.TRACK_LAM_X_ANGLE, self.WINDOW_ORIG, self.LAM_X_ANGLE)
+		# cv2.setTrackbarPos(self.TRACK_LAM_X_ANGLE_2, self.WINDOW_ORIG, self.LAM_X_ANGLE_2)
+		# cv2.setTrackbarPos(self.TRACK_LAM_X, self.WINDOW_ORIG, self.LAM_X)
+		# cv2.setTrackbarPos(self.TRACK_LAM_X_2, self.WINDOW_ORIG, self.LAM_X_2)
+		# cv2.setTrackbarPos(self.TRACK_LAM_Y, self.WINDOW_ORIG, self.LAM_Y)
+		# cv2.setTrackbarPos(self.TRACK_LAM_Y_2, self.WINDOW_ORIG, self.LAM_Y_2)
 
 
 	def updateFactors(self):
@@ -92,9 +91,9 @@ class UnloadingMask:
 		self.FACTOR_Y = self.LAM_Y / math.exp(self.currentPositionY / self.LAM_Y_2)
 
 
-	# def amclPoseCallback(self, PoseWithCovarianceStamped):
-	# 	self.currentPositionY = abs(PoseWithCovarianceStamped.pose.pose.position.y - self.UNLOADING_POSITION_Y)
-	# 	self.updateFactors()
+	def amclPoseCallback(self, PoseWithCovarianceStamped):
+		self.currentPositionY = abs(PoseWithCovarianceStamped.pose.pose.position.y - self.UNLOADING_POSITION_Y)
+		self.updateFactors()
 
 
 	def findLeftUpperPoint(self, approx_poly):
@@ -139,7 +138,6 @@ class UnloadingMask:
 				dy = int(dy * self.FACTOR_Y)
 				dx = int(dx * self.FACTOR_X)
 				img_rgb[rl[1]:rl[1]+dy, lu[0]:lu[0]+dx] = 0
-
 				# cv2.drawContours(img_cont_poly, [approx_poly], 0, (255, 0, 0), 1)
 			# cv2.imshow(self.WINDOW_CONT_POLY, img_cont_poly)
 		return img_rgb
@@ -194,14 +192,14 @@ class UnloadingMask:
 
 
 	def imageCallback(self, msg):
-		self.currentPositionY = cv2.getTrackbarPos(self.TRACK_POS_Y, self.WINDOW_ORIG)
-		self.LAM_X_ANGLE = cv2.getTrackbarPos(self.TRACK_LAM_X_ANGLE, self.WINDOW_ORIG)
-		self.LAM_X_ANGLE_2 = cv2.getTrackbarPos(self.TRACK_LAM_X_ANGLE_2, self.WINDOW_ORIG)
-		self.LAM_X = cv2.getTrackbarPos(self.TRACK_LAM_X, self.WINDOW_ORIG)
-		self.LAM_X_2 = cv2.getTrackbarPos(self.TRACK_LAM_X_2, self.WINDOW_ORIG)
-		self.LAM_Y = cv2.getTrackbarPos(self.TRACK_LAM_Y, self.WINDOW_ORIG)
-		self.LAM_Y_2 = cv2.getTrackbarPos(self.TRACK_LAM_Y_2, self.WINDOW_ORIG)
-		self.updateFactors()
+		# self.currentPositionY = cv2.getTrackbarPos(self.TRACK_POS_Y, self.WINDOW_ORIG)
+		# self.LAM_X_ANGLE = cv2.getTrackbarPos(self.TRACK_LAM_X_ANGLE, self.WINDOW_ORIG)
+		# self.LAM_X_ANGLE_2 = cv2.getTrackbarPos(self.TRACK_LAM_X_ANGLE_2, self.WINDOW_ORIG)
+		# self.LAM_X = cv2.getTrackbarPos(self.TRACK_LAM_X, self.WINDOW_ORIG)
+		# self.LAM_X_2 = cv2.getTrackbarPos(self.TRACK_LAM_X_2, self.WINDOW_ORIG)
+		# self.LAM_Y = cv2.getTrackbarPos(self.TRACK_LAM_Y, self.WINDOW_ORIG)
+		# self.LAM_Y_2 = cv2.getTrackbarPos(self.TRACK_LAM_Y_2, self.WINDOW_ORIG)
+		# self.updateFactors()
 
 		img_rgb = self.bridge.imgmsg_to_cv2(msg)
 		img_rgb = cv2.cvtColor(img_rgb, cv2.COLOR_BGR2RGB)
@@ -216,9 +214,9 @@ class UnloadingMask:
 		img_rgb = self.findUnloadingMask(img_rgb, self.processBlue(img_hsv))
 		# -----------------------------------------------------
 
-		# self.imageRawPub.publish(self.bridge.cv2_to_imgmsg(img_rgb))
-		cv2.imshow(self.WINDOW_ORIG, img_rgb)
-		cv2.waitKey(3)
+		self.imageRawPub.publish(self.bridge.cv2_to_imgmsg(img_rgb))
+		# cv2.imshow(self.WINDOW_ORIG, img_rgb)
+		# cv2.waitKey(3)
 	
 
 	def start(self):
